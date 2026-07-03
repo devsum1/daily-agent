@@ -1,0 +1,38 @@
+%% Consolidated system architecture — render at https://mermaid.live or any Mermaid viewer.
+flowchart TB
+    subgraph SCHED["n8n Orchestrator (cron)"]
+      A1["07:00 Discover & Score"]
+      A2["08:00 Morning Report"]
+      A3["Sun 18:00 Weekly Analytics"]
+    end
+
+    subgraph SCRAPE["Scraper (Playwright, your IP, headful)"]
+      L["LinkedIn / Naukri / Instahyre /\nHirist / Wellfound / Cutshort"]
+    end
+
+    subgraph API["NestJS API"]
+      M1["Matching + deterministic scoring (core)"]
+      M2["Generation: resume / cover / msg"]
+      M3["Application state machine + queue"]
+      M4["Outreach"]
+      M5["Reports + analytics"]
+      M6["LLM gateway: Claude (Haiku/Opus) -> OpenAI"]
+    end
+
+    PG[("PostgreSQL (source of truth)")]
+    MIRROR["Google Sheets + Notion (mirror)"]
+    NOTIFY["Telegram / Gmail / Slack"]
+    CLAUDE["Claude API"]
+    OPENAI["OpenAI API (fallback)"]
+
+    A1 --> SCRAPE --> API
+    M1 --> PG
+    M2 --> PG
+    M3 --> SCRAPE
+    M6 -.-> CLAUDE
+    M6 -.-> OPENAI
+    PG <--> MIRROR
+    A2 --> M5 --> NOTIFY
+    A3 --> M5
+    M3 -.->|approval card| NOTIFY
+    NOTIFY -.->|approve/reject| M3

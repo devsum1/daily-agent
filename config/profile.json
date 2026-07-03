@@ -1,0 +1,113 @@
+{
+  "candidate": {
+    "name": "Sumit Singh",
+    "yearsExperience": 5,
+    "currentRole": "Software Developer II (Fullstack)",
+    "currentCtcLpa": null,
+    "minHikePct": 30,
+    "noticePeriodDays": 60,
+    "email": "writeonsumit@gmail.com",
+    "phone": "+91 9518106138",
+    "linkedin": "https://linkedin.com/in/sumit-singh",
+    "baseResumePath": "./config/resume-base.md"
+  },
+  "targetRoles": [
+    "Senior Frontend Engineer",
+    "Frontend Engineer II",
+    "Fullstack Engineer",
+    "Software Engineer II",
+    "Senior Software Engineer"
+  ],
+  "searchKeywords": [
+    "Senior Frontend Engineer",
+    "Frontend Engineer",
+    "React Developer",
+    "Next.js Developer",
+    "Software Engineer II",
+    "Fullstack Engineer",
+    "Java Spring Boot",
+    "React + Java"
+  ],
+  "skills": {
+    "core": [
+      "React", "Next.js", "TypeScript", "JavaScript", "Frontend Architecture",
+      "Core Web Vitals", "Web Performance", "SEO", "SSR", "React Server Components"
+    ],
+    "secondary": [
+      "Java", "Spring Boot", "Node.js", "NestJS", "Redux", "Tailwind CSS",
+      "React Native", "Kafka", "PostgreSQL", "MySQL", "Redis", "Elasticsearch",
+      "Docker", "Kubernetes", "AWS", "Playwright", "Webpack", "Vite"
+    ],
+    "weights": {
+      "React": 1.0,
+      "Next.js": 1.0,
+      "TypeScript": 0.9,
+      "JavaScript": 0.8,
+      "Frontend Architecture": 0.9,
+      "SSR": 0.8,
+      "React Server Components": 0.7,
+      "Core Web Vitals": 0.7,
+      "Web Performance": 0.7,
+      "SEO": 0.6,
+      "Redux": 0.7,
+      "Tailwind CSS": 0.5,
+      "React Native": 0.5,
+      "Java": 0.6,
+      "Spring Boot": 0.6,
+      "Node.js": 0.7,
+      "NestJS": 0.6,
+      "Kafka": 0.4,
+      "PostgreSQL": 0.5,
+      "MySQL": 0.4,
+      "Redis": 0.4,
+      "Elasticsearch": 0.4,
+      "Docker": 0.5,
+      "Kubernetes": 0.4,
+      "AWS": 0.5,
+      "Playwright": 0.4,
+      "Webpack": 0.4,
+      "Vite": 0.4
+    }
+  },
+  "locations": ["Bangalore", "Gurgaon", "Noida", "Hyderabad", "Pune", "Remote India", "Remote"],
+  "companyPreferences": {
+    "prefer": ["product", "saas", "fintech", "ai", "startup-high-growth"],
+    "avoid": ["service", "consultancy", "staffing", "contract"],
+    "minGlassdoorRating": 3.5
+  },
+  "roleFit": {
+    "mustBeFrontendOrFullstack": true,
+    "acceptableArchetypes": ["senior-frontend", "frontend-heavy-fullstack"],
+    "rejectArchetypes": ["pure-backend", "devops", "data-engineering", "qa", "support"]
+  },
+  "thresholds": {
+    "skillMatchMinPct": 70,
+    "experienceMatchMinPct": 80,
+    "shortlistMinScore": 70,
+    "compMustExceedCurrent": true
+  },
+  "priorityWeights": {
+    "skillMatch": 0.35,
+    "experienceMatch": 0.20,
+    "compFit": 0.15,
+    "companyFit": 0.15,
+    "roleFit": 0.10,
+    "interviewProbability": 0.05
+  },
+  "limits": {
+    "maxApplicationsPerDay": 15,
+    "maxEasyApplyPerDay": 10,
+    "maxConnectionRequestsPerDay": 8,
+    "maxMessagesPerDay": 8,
+    "perPlatformSearchPagesPerRun": 3,
+    "minSecondsBetweenActions": 45
+  },
+  "platforms": {
+    "linkedin": { "enabled": true, "easyApply": true, "outreach": true },
+    "naukri": { "enabled": true, "easyApply": true, "outreach": false },
+    "instahyre": { "enabled": true, "easyApply": true, "outreach": false },
+    "hirist": { "enabled": true, "easyApply": false, "outreach": false },
+    "wellfound": { "enabled": true, "easyApply": true, "outreach": true },
+    "cutshort": { "enabled": true, "easyApply": true, "outreach": false }
+  }
+}

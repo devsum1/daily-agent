@@ -1,0 +1,148 @@
+{
+  "name": "JSA — Daily Job Search",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [ { "field": "cronExpression", "expression": "0 7 * * *" } ] }
+      },
+      "id": "cron-0700",
+      "name": "Cron 07:00 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [ 240, 300 ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE}}/config/flags",
+        "options": { "response": { "response": { "responseFormat": "json" } } },
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "Bearer {{$env.API_INTERNAL_TOKEN}}" } ] }
+      },
+      "id": "get-flags",
+      "name": "Get flags",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 460, 300 ]
+    },
+    {
+      "parameters": {
+        "conditions": { "options": { "caseSensitive": true }, "conditions": [ { "leftValue": "={{$json.discoveryEnabled}}", "rightValue": true, "operator": { "type": "boolean", "operation": "equals" } } ] }
+      },
+      "id": "guard",
+      "name": "Discovery enabled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [ 680, 300 ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE}}/config/search-matrix",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "Bearer {{$env.API_INTERNAL_TOKEN}}" } ] }
+      },
+      "id": "search-matrix",
+      "name": "Build search matrix",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 900, 220 ],
+      "notes": "Returns array of {platform, keyword, location, pages} from profile.json"
+    },
+    {
+      "parameters": { "fieldToSplitOut": "combos", "options": {} },
+      "id": "split",
+      "name": "Split combos",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [ 1120, 220 ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SCRAPER_BASE}}/search",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": { "batching": { "batch": { "batchSize": 1, "batchInterval": 8000 } } }
+      },
+      "id": "scrape",
+      "name": "Scraper /search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 1340, 220 ],
+      "notes": "Concurrency 1 + 8s interval = human-like pacing"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE}}/jobs/ingest",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ cards: $json.cards }) }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "Bearer {{$env.API_INTERNAL_TOKEN}}" } ] }
+      },
+      "id": "ingest",
+      "name": "API /jobs/ingest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 1560, 220 ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE}}/matching/score-pending",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "Bearer {{$env.API_INTERNAL_TOKEN}}" } ] }
+      },
+      "id": "score",
+      "name": "API /matching/score-pending",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 1780, 300 ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE}}/applications/draft-shortlisted",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "Bearer {{$env.API_INTERNAL_TOKEN}}" } ] }
+      },
+      "id": "draft",
+      "name": "API /applications/draft-shortlisted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 2000, 300 ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE}}/applications/dispatch",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ mode: $env.AUTO_APPLY_MODE }) }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "Bearer {{$env.API_INTERNAL_TOKEN}}" } ] }
+      },
+      "id": "dispatch",
+      "name": "API /applications/dispatch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 2220, 300 ],
+      "notes": "API decides: easy_apply→queue; review/off→Telegram approval cards"
+    }
+  ],
+  "connections": {
+    "Cron 07:00 IST": { "main": [ [ { "node": "Get flags", "type": "main", "index": 0 } ] ] },
+    "Get flags": { "main": [ [ { "node": "Discovery enabled?", "type": "main", "index": 0 } ] ] },
+    "Discovery enabled?": { "main": [ [ { "node": "Build search matrix", "type": "main", "index": 0 } ], [] ] },
+    "Build search matrix": { "main": [ [ { "node": "Split combos", "type": "main", "index": 0 } ] ] },
+    "Split combos": { "main": [ [ { "node": "Scraper /search", "type": "main", "index": 0 } ] ] },
+    "Scraper /search": { "main": [ [ { "node": "API /jobs/ingest", "type": "main", "index": 0 } ] ] },
+    "API /jobs/ingest": { "main": [ [ { "node": "API /matching/score-pending", "type": "main", "index": 0 } ] ] },
+    "API /matching/score-pending": { "main": [ [ { "node": "API /applications/draft-shortlisted", "type": "main", "index": 0 } ] ] },
+    "API /applications/draft-shortlisted": { "main": [ [ { "node": "API /applications/dispatch", "type": "main", "index": 0 } ] ] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Kolkata" },
+  "active": false,
+  "tags": [ { "name": "jsa" } ]
+}

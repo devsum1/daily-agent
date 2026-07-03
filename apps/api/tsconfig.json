@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2022",
+    "outDir": "dist",
+    "rootDir": "../..",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@jsa/core": ["../../packages/core/src"],
+      "@jsa/integrations": ["../../packages/integrations/src"]
+    }
+  },
+  "include": ["src", "../../packages/core/src", "../../packages/integrations/src"]
+}

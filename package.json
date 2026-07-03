@@ -1,0 +1,30 @@
+{
+  "name": "job-search-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Autonomous job search & application agent (human-in-the-loop)",
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "pnpm --filter @jsa/api dev",
+    "dev:scraper": "pnpm --filter @jsa/scraper dev",
+    "scraper:login": "pnpm --filter @jsa/scraper login",
+    "db:migrate": "pnpm --filter @jsa/api prisma migrate dev",
+    "db:studio": "pnpm --filter @jsa/api prisma studio",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "prisma": "5.22.0"
+  },
+  "dependencies": {
+    "@prisma/client": "5.22.0"
+  }
+}

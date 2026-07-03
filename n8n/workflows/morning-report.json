@@ -1,0 +1,80 @@
+{
+  "name": "JSA — Morning Report (08:00)",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [ { "field": "cronExpression", "expression": "0 8 * * *" } ] } },
+      "id": "cron-0800",
+      "name": "Cron 08:00 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [ 240, 300 ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE}}/reports/daily",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "Bearer {{$env.API_INTERNAL_TOKEN}}" } ] }
+      },
+      "id": "report",
+      "name": "Get daily report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 460, 300 ],
+      "notes": "Returns { subject, markdown, html, telegram, sections }"
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.GMAIL_USER}}",
+        "toEmail": "={{$env.REPORT_TO_EMAIL}}",
+        "subject": "={{$json.subject}}",
+        "emailFormat": "html",
+        "html": "={{$json.html}}"
+      },
+      "id": "gmail",
+      "name": "Email (Gmail)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [ 720, 180 ],
+      "credentials": { "smtp": { "id": "GMAIL_SMTP", "name": "Gmail SMTP" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SLACK_WEBHOOK_URL}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.markdown }) }}"
+      },
+      "id": "slack",
+      "name": "Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 720, 300 ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{$env.TELEGRAM_BOT_TOKEN}}/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $env.TELEGRAM_CHAT_ID, text: $json.telegram, parse_mode: 'Markdown' }) }}"
+      },
+      "id": "telegram",
+      "name": "Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 720, 420 ]
+    }
+  ],
+  "connections": {
+    "Cron 08:00 IST": { "main": [ [ { "node": "Get daily report", "type": "main", "index": 0 } ] ] },
+    "Get daily report": { "main": [ [
+      { "node": "Email (Gmail)", "type": "main", "index": 0 },
+      { "node": "Slack", "type": "main", "index": 0 },
+      { "node": "Telegram", "type": "main", "index": 0 }
+    ] ] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Kolkata" },
+  "active": false,
+  "tags": [ { "name": "jsa" } ]
+}

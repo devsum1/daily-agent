@@ -1,0 +1,38 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+storage-state/        # persisted browser sessions — NEVER commit
+
+# build
+dist/
+build/
+.next/
+*.tsbuildinfo
+
+# generated artifacts
+artifacts/            # tailored resumes, cover letters, screenshots
+*.pdf
+*.docx
+
+# logs
+logs/
+*.log
+npm-debug.log*
+
+# prisma
+prisma/migrations/dev.db*
+
+# os
+.DS_Store
+Thumbs.db
+
+# n8n local data
+.n8n/

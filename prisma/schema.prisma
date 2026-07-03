@@ -1,0 +1,238 @@
+// Prisma schema — single source of truth for the database.
+// Generate client:  pnpm --filter @jsa/api prisma generate
+// Apply migration:  pnpm --filter @jsa/api prisma migrate dev
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Platform {
+  LINKEDIN
+  NAUKRI
+  INSTAHYRE
+  HIRIST
+  WELLFOUND
+  CUTSHORT
+}
+
+enum JobStatus {
+  NEW
+  SCORED
+  SHORTLISTED
+  SKIPPED
+  ARCHIVED
+}
+
+enum ApplicationStatus {
+  NEW
+  DRAFTED            // documents generated, awaiting decision
+  QUEUED             // approved, waiting for apply worker
+  APPLIED
+  NEEDS_MANUAL       // custom questions / captcha / selector drift
+  RECRUITER_CONTACTED
+  INTERVIEW_SCHEDULED
+  REJECTED
+  OFFER
+  WITHDRAWN
+}
+
+enum DocumentType {
+  RESUME
+  COVER_LETTER
+  RECRUITER_MESSAGE
+  CUSTOM_ANSWERS
+  CONNECTION_NOTE
+}
+
+enum ApplyMethod {
+  EASY_APPLY
+  EXTERNAL
+  ONE_CLICK
+  MANUAL
+}
+
+enum OutreachStatus {
+  IDENTIFIED
+  DRAFTED
+  REQUEST_SENT
+  CONNECTED
+  REPLIED
+  NO_RESPONSE
+}
+
+model Job {
+  id            String     @id @default(cuid())
+  dedupeHash    String     @unique          // sha256(platform + company + title + locationNorm)
+  platform      Platform
+  externalId    String?                     // platform's own job id when available
+  title         String
+  company       String
+  companyDomain String?
+  location      String
+  remote        Boolean    @default(false)
+  url           String
+  description   String?                     // full extracted JD
+  postedAt      DateTime?
+  salaryText    String?                     // raw salary string if shown
+  salaryMinLpa  Float?
+  salaryMaxLpa  Float?
+  easyApply     Boolean    @default(false)
+  companyRating Float?                      // Glassdoor/AmbitionBox if available
+  companyType   String?                     // product | service | saas | fintech | ai | startup
+  status        JobStatus  @default(NEW)
+  rawJson       Json?                       // original scraped payload for debugging
+  discoveredAt  DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  score         JobScore?
+  application   Application?
+  documents     Document[]
+  outreach      Outreach[]
+  events        Event[]
+
+  @@index([status])
+  @@index([platform, company])
+  @@index([discoveredAt])
+}
+
+model JobScore {
+  id                   String   @id @default(cuid())
+  jobId                String   @unique
+  job                  Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  skillMatchPct        Float    // 0-100, weighted overlap vs profile
+  experienceMatchPct   Float    // 0-100
+  compFitPct           Float    // 0-100, likelihood comp beats current+30%
+  companyFitPct        Float    // 0-100
+  roleFitPct           Float    // 0-100 (archetype alignment)
+  interviewProbability Float    // 0-100, model estimate
+  priorityScore        Float    // 0-100, weighted blend (the headline number)
+
+  matchedSkills        String[]
+  missingSkills        String[]
+  archetype            String   // senior-frontend | frontend-heavy-fullstack | pure-backend | ...
+  passedGate           Boolean  // skill>70 && exp>80 && compFit && roleFit
+  rationale            String?  // short LLM/engine explanation
+  scoredAt             DateTime @default(now())
+
+  @@index([priorityScore])
+  @@index([passedGate])
+}
+
+model Application {
+  id              String            @id @default(cuid())
+  jobId           String            @unique
+  job             Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  status          ApplicationStatus @default(NEW)
+  applyMethod     ApplyMethod?
+  resumeVersion   String?           // points to Document.id used
+  appliedAt       DateTime?
+  followUpDate    DateTime?
+  needsHumanReason String?          // why flagged for review
+  confirmationRef String?           // platform confirmation id / url
+  screenshotPath  String?
+  attempts        Int               @default(0)
+  lastError       String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([status])
+  @@index([followUpDate])
+}
+
+model Document {
+  id          String       @id @default(cuid())
+  jobId       String
+  job         Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  type        DocumentType
+  version     Int          @default(1)
+  content     String       // markdown / text
+  filePath    String?      // rendered pdf/docx path in artifacts/
+  model       String?      // which LLM produced it
+  tokensIn    Int?
+  tokensOut   Int?
+  createdAt   DateTime     @default(now())
+
+  @@index([jobId, type])
+}
+
+model Recruiter {
+  id          String     @id @default(cuid())
+  name        String
+  title       String?    // Recruiter | Engineering Manager | Hiring Manager
+  company     String?
+  profileUrl  String?    @unique
+  email       String?
+  source      Platform?
+  createdAt   DateTime   @default(now())
+
+  outreach    Outreach[]
+}
+
+model Outreach {
+  id          String         @id @default(cuid())
+  jobId       String?
+  job         Job?           @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  recruiterId String
+  recruiter   Recruiter      @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  role        String         // hiring_manager | engineering_manager | recruiter
+  status      OutreachStatus @default(IDENTIFIED)
+  message     String?
+  sentAt      DateTime?
+  repliedAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([status])
+}
+
+// Append-only audit log of every meaningful state change / outbound action.
+model Event {
+  id        String   @id @default(cuid())
+  jobId     String?
+  job       Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  type      String   // DISCOVERED | SCORED | DRAFTED | APPLY_ATTEMPT | APPLIED | OUTREACH_SENT | ERROR ...
+  actor     String   // system | scraper | api | human
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+// One row per LLM call for cost tracking.
+model LlmUsage {
+  id         String   @id @default(cuid())
+  purpose    String   // jd_extract | score | resume | cover | recruiter_msg | report
+  provider   String   // claude | openai
+  model      String
+  tokensIn   Int
+  tokensOut  Int
+  costUsd    Float
+  jobId      String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([purpose])
+}
+
+// Daily/weekly rollups for analytics + report generation.
+model DailyMetric {
+  id                   String   @id @default(cuid())
+  date                 DateTime @unique @db.Date
+  jobsDiscovered       Int      @default(0)
+  jobsShortlisted      Int      @default(0)
+  applicationsSubmitted Int     @default(0)
+  recruitersContacted  Int      @default(0)
+  recruiterReplies     Int      @default(0)
+  interviewsScheduled  Int      @default(0)
+  llmCostUsd           Float    @default(0)
+  createdAt            DateTime @default(now())
+}

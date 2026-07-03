@@ -1,0 +1,49 @@
+# Runs the scraper every morning at 06:00 IST (00:30 UTC) and pushes jobs to
+# the Apps Script webhook → Google Sheets. Also runnable manually from the
+# Actions tab ("Run workflow").
+name: Daily job scrape
+
+on:
+  schedule:
+    - cron: "30 0 * * *"   # 06:00 Asia/Kolkata
+  workflow_dispatch: {}
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: scraper
+        run: npm install --no-audit --no-fund
+
+      - name: Scrape and score jobs
+        working-directory: scraper
+        env:
+          SHEETS_WEBHOOK_URL: ${{ secrets.SHEETS_WEBHOOK_URL }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: node run-local.mjs
+
+      - name: Generate LinkedIn outreach page
+        working-directory: scraper
+        run: node generate-outreach.mjs
+
+      - name: Upload outreach page
+        uses: actions/upload-artifact@v4
+        with:
+          name: outreach-${{ github.run_id }}
+          path: data/outreach-today.html
+          retention-days: 3
+
+      - name: Push jobs to Google Sheets
+        working-directory: scraper
+        env:
+          SHEETS_WEBHOOK_URL: ${{ secrets.SHEETS_WEBHOOK_URL }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: node src/index.js

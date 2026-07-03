@@ -1,0 +1,17 @@
+{
+  "name": "@jsa/integrations",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": { "build": "tsc -p tsconfig.json", "lint": "eslint src" },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "googleapis": "^144.0.0",
+    "nodemailer": "^6.9.15"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.16",
+    "typescript": "^5.5.0"
+  }
+}

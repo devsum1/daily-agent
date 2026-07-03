@@ -1,0 +1,22 @@
+{
+  "name": "@jsa/scraper",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts serve",
+    "search": "tsx src/index.ts search",
+    "login": "tsx src/session.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js serve",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@jsa/core": "workspace:*",
+    "playwright": "^1.47.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
+  }
+}

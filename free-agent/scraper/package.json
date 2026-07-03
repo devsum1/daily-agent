@@ -1,0 +1,18 @@
+{
+  "name": "free-job-agent-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "scrape": "node src/index.js",
+    "dry-run": "node src/index.js --dry-run",
+    "daily": "node run-local.mjs && node generate-outreach.mjs && open ../data/outreach-today.html",
+    "outreach": "node generate-outreach.mjs && open ../data/outreach-today.html"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
