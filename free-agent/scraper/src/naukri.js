@@ -43,6 +43,12 @@ export async function scrapeNaukri() {
           if (job.url && !seen.has(job.url)) { seen.add(job.url); jobs.push(job); }
         }
       } catch (e) {
+        if (/HTTP (406|403)/.test(e.message)) {
+          // Captcha-gated for non-browser clients — known, documented. Gmail
+          // job alerts are the Naukri channel; don't hammer 30 doomed requests.
+          console.log('naukri: API captcha-gated (expected) — skipping; Naukri jobs arrive via Gmail alerts instead');
+          return jobs;
+        }
         console.warn(`naukri: ${keyword} @ ${location} failed — ${e.message}`);
       }
       await sleep(REQUEST_DELAY_MS);

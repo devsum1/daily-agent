@@ -1,6 +1,7 @@
 // Local end-to-end demo: scrape → score (same engine as Apps Script) → digest.
 // Usage: node run-local.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { scrapeLinkedIn } from './src/linkedin.js';
 import { scrapeNaukri } from './src/naukri.js';
 import { scrapeOthers } from './src/others.js';
@@ -28,6 +29,6 @@ for (const j of scored.slice(0, 10)) {
   console.log(`        ${j.url}`);
 }
 
-const outPath = new URL('../../data/jobs-latest.json', import.meta.url).pathname;
+const outPath = fileURLToPath(new URL('../data/jobs-latest.json', import.meta.url));
 writeFileSync(outPath, JSON.stringify(scored, null, 2));
 console.log(`\nFull scored list: ${outPath} (${scored.length} jobs)`);

@@ -29,10 +29,10 @@ const targets = jobs.filter(j => j.score >= 60).slice(0, 30); // High + Medium, 
 
 // ── Build the auto-connect script with a fixed JOB_LINK ───────────────────
 function consoleScript(job) {
-  const note = `Hi, I noticed this opening at ${job.company}:
+  const note = `Hi, I saw this Software Developer opening:
 ${job.url}
 Could you please consider referring me if my profile matches?
-My portfolio: devsum1-portfolio.netlify.app
+Portfolio: devsum1-portfolio.netlify.app
 Thanks!`;
 
   // Escape backticks/backslashes inside the note for embedding in a template literal

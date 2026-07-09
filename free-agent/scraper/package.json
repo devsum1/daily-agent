@@ -6,11 +6,15 @@
   "scripts": {
     "scrape": "node src/index.js",
     "dry-run": "node src/index.js --dry-run",
-    "daily": "node run-local.mjs && node generate-outreach.mjs && open ../data/outreach-today.html",
-    "outreach": "node generate-outreach.mjs && open ../data/outreach-today.html"
+    "daily": "node run-local.mjs && node generate-outreach.mjs && node outreach-auto.mjs",
+    "outreach": "node generate-outreach.mjs && open ../data/outreach-today.html",
+    "login": "node outreach-auto.mjs --login",
+    "import-session": "node outreach-auto.mjs --import-session",
+    "auto": "node outreach-auto.mjs"
   },
   "dependencies": {
-    "cheerio": "^1.0.0"
+    "cheerio": "^1.0.0",
+    "playwright": "^1.50.0"
   },
   "engines": {
     "node": ">=20"

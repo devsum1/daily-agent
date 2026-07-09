@@ -44,31 +44,40 @@ async function fetchDescription(jobUrl) {
 export async function scrapeLinkedIn() {
   const seen = new Set();
   const jobs = [];
+  const total = SEARCHES.keywords.length * SEARCHES.locations.length;
+  let i = 0;
 
   for (const keyword of SEARCHES.keywords) {
     for (const location of SEARCHES.locations) {
+      i++;
       const url =
         'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search' +
         `?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(location + ', India')}` +
         `&f_TPR=${SEARCHES.linkedinFreshness}&start=0`;
       try {
         const html = await fetchHtml(url);
+        const before = jobs.length;
         for (const card of parseCards(html)) {
           if (!seen.has(card.url)) { seen.add(card.url); jobs.push(card); }
         }
+        console.log(`linkedin [${i}/${total}] ${keyword} @ ${location} — ${jobs.length - before} new (${jobs.length} total)`);
       } catch (e) {
-        console.warn(`linkedin: ${keyword} @ ${location} failed — ${e.message}`);
+        console.warn(`linkedin [${i}/${total}] ${keyword} @ ${location} failed — ${e.message}`);
       }
       await sleep(REQUEST_DELAY_MS);
     }
   }
 
   // Enrich the first N with full descriptions for better keyword scoring.
-  for (const job of jobs.slice(0, MAX_DESCRIPTION_FETCHES)) {
+  const toEnrich = jobs.slice(0, MAX_DESCRIPTION_FETCHES);
+  console.log(`linkedin: fetching ${toEnrich.length} job descriptions (~${Math.round(toEnrich.length * REQUEST_DELAY_MS / 1000)}s)…`);
+  let done = 0;
+  for (const job of toEnrich) {
     job.description = await fetchDescription(job.url);
+    if (++done % 10 === 0 || done === toEnrich.length) console.log(`linkedin: descriptions ${done}/${toEnrich.length}`);
     await sleep(REQUEST_DELAY_MS);
   }
 
-  console.log(`linkedin: ${jobs.length} jobs`);
+  console.log(`linkedin: ${jobs.length} jobs ✅`);
   return jobs;
 }

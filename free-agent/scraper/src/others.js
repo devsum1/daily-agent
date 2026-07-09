@@ -52,6 +52,11 @@ export async function scrapeOthers() {
         const $ = cheerio.load(await res.text());
         jobs.push(...fromJsonLd($, target.source).filter((j) => j.title && j.url));
       } catch (e) {
+        if (/HTTP (403|406|429)/.test(e.message)) {
+          // Cloudflare/login wall — expected; their alert emails are the channel.
+          console.log(`${target.source.toLowerCase()}: blocked (expected) — skipping remaining searches`);
+          break; // next site
+        }
         console.warn(`${target.source.toLowerCase()}: ${keyword} skipped — ${e.message}`);
       }
       await sleep(REQUEST_DELAY_MS);
